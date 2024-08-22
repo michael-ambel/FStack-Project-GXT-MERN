@@ -1,15 +1,23 @@
 const express = require('express')
 require('dotenv').config();
+const mongoose = require('mongoose');
 
 const workoutRouter = require('./routes/workouts')
 
 //create react app
 const app = express();
+mongoose.connect(process.env.URI)
+    .then(()=>{
+        //start request listner
+        app.listen(process.env.PORT, () => {
+        console.log('...DB connected');
+        console.log('...listning on port:', process.env.PORT);
+        })
+    })
+    .catch((error)=>{
+        console.log('Error to connect:', error);
+    })
 
-//listner
-app.listen(process.env.PORT, () => {
-    console.log('...start listning on port:', process.env.PORT);
-})
 
 
 //middleware
