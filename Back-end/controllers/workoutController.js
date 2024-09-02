@@ -3,12 +3,13 @@ const mongoose = require('mongoose')
 
 module.exports.getWorkouts = async (req, res) => {
     try{
-        const workouts = await Workout.find({});
-        res.status(200).json({workouts})
+        const user_id = req.user._id
+        const workouts = await Workout.find({user_id}).sort({ _id: -1 });
+        res.status(200).json(workouts)
     }
-    catch{(error) => {
+    catch(error){
         res.status(404).json({error: error.message})
-    }}
+    }
 }
 
 module.exports.getWorkout = async (req, res) => {
@@ -21,25 +22,43 @@ module.exports.getWorkout = async (req, res) => {
             {
                 res.status(404).json({error: "There is no such workout"})
             }
-            res.status(200).json({workout})
+            res.status(200).json(workout)
         }
-        catch{(error) => {
+        catch(error){
             res.status(404).json({error: error.message})
-        }}
+        }
     }else{
         res.json({mssg: "Invalid Workout Id"})
     }
 }
 
 module.exports.postWorkout = async (req, res) => {
-    try{
-        const { tittle, rep, load } = req.body;
-        const workout = await Workout.create({tittle, rep, load})
-        res.status(200).json(workout)
+    const { title, rep, load } = req.body;
+    const emptyFields = []
+
+    if(!title){
+        emptyFields.push('title')
     }
-    catch{(error) => {
+    if(!load){
+        emptyFields.push('load')
+    }
+    if(!rep){
+        emptyFields.push('rep')
+    }
+    if(emptyFields.length > 0){
+        return res.status(400).json({error:'Please fill all the fields', emptyFields})
+    }
+
+    try{
+        const user_id = req.user._id
+        const workout = await Workout.create({title, rep, load, user_id})
+        res.status(200).json(workout)
+        console.log(workout);
+    }
+    catch(error){
         res.status(400).json({error: error.message})
-    }}
+        console.log(error.message);
+    }
 }
 
 module.exports.editWorkout = async (req, res) => {
@@ -49,11 +68,11 @@ module.exports.editWorkout = async (req, res) => {
         try{
             const workout = await Workout.findByIdAndUpdate({_id: id}, req.body)
             console.log(req.body);
-            res.status(200).json({workout})
+            res.status(200).json(workout)
         }
-        catch{(error) => {
+        catch(error){
             res.status(404).json({error: error.message})
-        }}
+        }
     }else{
         res.json({mssg: "Invalid Workout Id"})
     }
@@ -65,7 +84,7 @@ module.exports.deleteWorkout = async (req, res) => {
     if(mongoose.isValidObjectId(id)){
         try{
             const workout = await Workout.findByIdAndDelete({_id: id})
-            res.status(200).json({workout})
+            res.status(200).json(workout)
         }
         catch{(error) => {
             res.status(404).json({error: error.message})
